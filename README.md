@@ -13,7 +13,7 @@ The aim of this guide is to show a general approach to implementing the MLASP pr
 The guide in this repository does not recreate the open-source system used in the initial research (which is published in the @SPEAR-SE organization: https://github.com/SPEAR-SE/mlasp.
 
 For convenience, the overall MLASP process diagram is presented below:
-![mlasp-process](docs/mlasp-process.png)
+![mlasp-process](images/mlasp-process.png)
 
 ## Introduction and Overview
 As seen in the above diagram, there are three major areas of the MLASP process:
