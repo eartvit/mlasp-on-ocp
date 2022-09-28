@@ -5,7 +5,7 @@ This is a demo for the overall process described in the MLASP research paper pub
 * [DOI](https://link.springer.com/article/10.1007/s10664-021-09994-0)
 * Link to the [article](https://rdcu.be/cobcU)
 
-In order to execute the below guide, access to a Red Hat OpenShift environment is required. If you don't have one, you can start a trial by creating an account at https://cloud.redhat.com. Alternatively, it is also possible to execute the guide on a local (reduced version) of the platform, typically used for development purposes. Once you registered on the https://cloud.redhat.com, you can obtain your version of the local Red Hat Openshift by downloading the installer from the [Console](https://console.redhat.com/openshift/create/local).
+In order to execute the below guide, access to a Red Hat OpenShift environment is required. If you don't have one, you can start a trial by creating an account at [RedHat Cloud website](https://cloud.redhat.com). Alternatively, it is also possible to execute the guide on a local (reduced version) of the platform, typically used for development purposes. Once you registered on the [RedHat Cloud website](https://cloud.redhat.com), you can obtain your version of the local Red Hat Openshift by downloading the installer from the [Console](https://console.redhat.com/openshift/create/local).
 
 ## Foreword
 
@@ -73,7 +73,7 @@ A tekton pipeline may be created outside of the RedHat Openshift platform and th
 
 For this demonstration purposes, the pipeline is provided as part of this repository.
 Although the Tekton (as an operator) is global for the entire OpenShift cluster, a pipeline and its tasks reside inside a namespace (a.k.a project). For the purposes of this demonstration we shall use the ```demo1``` project. The project may be created directly using the OpenShift web console, or using the command line interface (the ```oc``` tool).
-For convenience, througout this demonstration, we shall use at times the web console and some other times the CLI interface. A quick way to connect the CLI to the cluster is by obtaining a direct access token from the OpenShift web console. Once authenticated in the console, click on the user name (right-up corner) and then on the *copy login command* option. 
+For convenience, througout this demonstration, we shall use at times the web console and some other times the CLI interface. A quick way to connect the CLI to the cluster is by obtaining a direct access token from the OpenShift web console. Once authenticated in the console, click on the user name (right-up corner) and then on the *copy login command* option.
 ![ocp-login-token](images/ocp-login-token.png)
 In the next screen you will see a *Display token* link. Click on it to obtain the security details. Use the login command in terminal screen to log into the cluster and create the project where the automation pipeline and its task will reside (in our case, demo1).
 
@@ -99,7 +99,7 @@ oc apply -f auto-multipod-lt-wiremock.yaml
 After executing all the above, you should see inside the console all the tasks and pipeline definitions listed.
 Before running the pipeline, we must add an additional resource into the project space: a timeseries database where the load tests results are stored. This example uses [InfluxDb](https://www.influxdata.com/). Let's set it up and configure it to allow the lt-summary task write the load test summary in it.
 
-First, we need some storage where InfluxDb shall store the collected data. To do that, we need to have a *Persistent Volume* (PV) and a *Peristent Volume Claim* reserved for the timeseries database. This can be easily achieved using the OpenShift web console.
+First, we need some storage where InfluxDb shall store the collected data. To do that, we need to have a *Persistent Volume* (PV) and a *Peristent Volume Claim* (PVC) reserved for the timeseries database. This can be easily achieved using the OpenShift web console.
 
 We shall create the PVC. If the OpenShift is running on a cloud provider (e.g., AWS infrastructure), the PV will be automatically created whenever the PVC is bound and used. Binding happens whenever the PVC is used by a Deployment. Let's create the PVC then using the OpenShift web console.
 
@@ -110,6 +110,7 @@ Ensure you are in the ```demo1``` project space and fill in the name of the stor
 
 Wait for the PVC to be created before continuing to the next step, which is deploying InfluxDb using a *Deployment* resource.
 Before we deploy Influx, we must setup the secrets for its database backend. The resources can be created in the web console or using the CLI, as described below:
+
 ```bash
 oc project demo1
 oc apply -f influxdb-creds.yaml
@@ -149,3 +150,60 @@ export RUNS=10
 ```
 
 Please note the first time the pipleline is executed OpenShift will download any missing resources, such as bombardier's docker image hosted on dockerhub, the test subject image which encapsulates wiremock, as well as any other helper image required by the pipeline execution, therfore the first run will take a bit longer to complete. Please also remember this is a load test and the duration if the test is given as a parameter to bombardier (randomly picked from a pre-configured range which has been defined inside the loop starter script).
+
+All the load test executions (as pipeline runs) are stored inside OpenShift and they can be inspected any time later.
+To perform a quick cleanup of all the completed load tests (so that only the summary results stored inside InfluxDb are kept), run the following commands:
+
+```bash
+oc project demo1
+oc delete pod --field-selector=status.phase==Succeeded
+```
+
+## Machine Learning Modelling
+
+As load testing data gathers we can prepare for the next stage of the MLASP process, namely the ML modelling and training part.
+A simple and straightforward way of achieving this step is making use of the [Open Data Hub](https://opendatahub.io) operator which is a blueprint architecture for machine learning workloads on Kubernetes based platforms. Open Data Hub is formed of several independent tools and projects. For the purposes of this demonstration we only need the JupyterHub component as an IDE used by ML practitioners and Data Scientists to prepare data for machine learning modelling and then build and train machine learning models.
+
+To install the Open Data Hub (ODH) operator on OpenShift, we shall use the web console. As a cluster admin user, navigate to the Operators > Operators Hub page and type in Open Data Hub in the search box:
+![ocp-odh-01](images/ocp-odh-01.png)
+
+Click on the operator, aknowledge the message (about the community opereator) and then click install.
+[!ocp-odh-02](images/ocp-odh-02.png)
+Accept all the defaults and click on install. Wait for the installation to complete before going to the next step.
+![ocp-odh-03](images/ocp-odh-03.png)
+
+Once the installation has completed, we need to create an instance of the operator and select which components we want to use. For that we need a Kubernetes namespace (a.k.a OpenShift project). Let's call our instance ```opendatahub```.
+Using the web console, in the administrator view, navigate to Home > Projects and click on the create project button:
+![ocp-odh-04](images/ocp-odh-04.png)
+In the pop-up that is displayed on the screen fill in the name box ```opendatahub``` and click on the create button:
+![ocp-odh-05](images/ocp-odh-05.png)
+Now that we have the project namespace ready we can instantiate the operator by going to Operators > Installed Operators and selecting Open Data Hub
+![ocp-odh-06](images/ocp-odh-06.png)
+The next screen will present options on how to deploy ODH (using the default way or by deploying Kubeflow only). We shall use the default way in this case by clicking on the "Create instance" link of the tile displayed on top of the page (under Provided APIs section):
+![ocp-odh-07](images/ocp-odh-07.png)
+In the next screen, switch to the *YAML view* and keep only the following entries under the spec: odh-common, jupyter-hub, notebook-images, and odh-dashboard:
+![ocp-odh-08](images/ocp-odh-08.png)
+Click on create and wait a few minutes for components to install. During the installation process OpenShift will also create the necessary routes to access the applications. Check under Networking > Routes for them to show up.
+![ocp-odh-09](images/ocp-odh-09.png)
+Alternatively, the instance may be creating from the command line interface running the following commands:
+
+```bash
+oc project opendatahub
+oc apply -f odh-instance.yaml
+```
+
+Using the navigation menu on the web console interface, click on the ODH Portal external URL from under Networking > Routes. A new tab/window should open asking you to authenticate followed by permissions check. Leave everything on and click on *Allow selected permissions* button:
+![ocp-odh-10](images/ocp-odh-10.png)
+This will complete the ODH dashboard setup and let you access JupyterHub inside it.
+![ocp-odh-11](images/ocp-odh-11.png)
+Click on the "Launch application" link under the JupyterHub tile. This will open yet another window/tab asking for permissions confirmation.
+![ocp-odh-12](images/ocp-odh-12.png)
+This step is required since as you recall from above, ODH is a set of independent projects and the dashboard is just another component which groups these components in a convenient way to be accessed. Once the permissions are set, you will see a page where different notebook images are available. These images are packaged for convenience with the ODH operator. Each image is pre-loaded with specific python libraries used for data science. Additional images may be added, and on the existing images additional libraries may be installed as well.
+![ocp-odh-13](images/ocp-odh-13.png)
+OpenShift also provided CUDA support for NVIDIA based graphic cards (if they are available to the cluster), this subject is however outside of the scope of our demo.
+Another area outside of the scope of this demo is to reproduce the different ML architectures presented by the [MLASP](https://rdcu.be/cobcU) paper and published in the [SPEAR-SE MLASP](https://github.com/SPEAR-SE/mlasp) repository. We shall present however, as a generic approach, how to use the Jupyter inside OpenShift to process the load test data which has been summarized inside the InfluxDB timeseries database and create a simple model and train it. We shall then package the trained model into a new container for inferencing on the two use cases mentioned earlier in this article.
+
+Let's get started. From the JupyterHub console we shall launch a notebook server. As we shall build an XGB based model, we can make use of the standard datascience notebook, with a medium sized container:
+![ocp-odh-jh-std-01](images/ocp-odh-jh-std-01.png)
+
+Once the server is started, you can either type in all the commands in the notebook cells following the prepared notebook in the ![notebooks](/notebooks) section of this repository (or just import them by using the upload function inside the JupyterLab IDE).

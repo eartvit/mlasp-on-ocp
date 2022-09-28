@@ -26,6 +26,8 @@ spec:
         - '-d'
         - $(inputs.params.duration)
         - '-k'
+        - '-p'
+        - 'r'
         - '-o'
         - $(inputs.params.outFormat)
         - '-t'
