@@ -134,6 +134,12 @@ exit
 
 There are two ```exit``` commands required, the first to exit the InfluxDB application and the second to exit the pod.
 
+Before we start the automated load tests we need to expose the InfluxDB endpoint as a service inside OpenShift so that it is visible to other applications inside the cluster. Note that we only expose it the endpoint inside the cluster (in other words we don't add also a route to the service). The service creation is done running the following command:
+
+```bash
+oc expose deployment influxdb --port=8086 --target-port=8086 --protocol=TCP --type=ClusterIP
+```
+
 Now we are ready to execute on the load test automation using the ```loop_lt_multipod_pipeline_wiremock.sh``` shell script (please note this script requires to have also the tkn command line tool installed on your system).
 The script controls the number of iterations though the ```$RUNS``` environment variable, which must be set before using it. The script uses internally the tkn command line tool for Tekton pipelines control inside OpenShift and uses a number of parameters associated with the pipeline. If you want to change the defaults, alter directly the values in the script before running it. To execute the script with the defaults run the following commands on your system.
 
