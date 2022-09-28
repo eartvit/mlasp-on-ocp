@@ -1,0 +1,25 @@
+﻿apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: generate-random-number
+  namespace: demo1
+spec:
+  params:
+    - default: '1'
+      name: lowerBound
+      type: string
+    - default: '10'
+      name: upperBound
+      type: string
+  results:
+    - description: Generated random number
+      name: randNum
+  steps:
+    - image: registry.redhat.io/ubi7/ubi-minimal
+      name: generate-rand-num
+      resources: {}
+      script: >
+        #!/usr/bin/env bash
+
+        echo $[ $RANDOM % $(inputs.params.upperBound) +
+        $(inputs.params.lowerBound) ] | tr -d '\n' | tee $(results.randNum.path)

@@ -1,0 +1,121 @@
+﻿apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: lt-summary
+  namespace: demo1
+spec:
+  params:
+    - default: >-
+        http://influxdb.demo1.svc.cluster.local:8086/write?db=bombardier&precision=s&user=root&p=root
+      name: influxDBURL
+      type: string
+    - default: '1'
+      name: ltTargetSize
+      type: string
+    - default: '200'
+      name: cThreads
+      type: string
+    - default: '200'
+      name: jacptThreads
+      type: string
+    - default: '1000'
+      name: jacptQSize
+      type: string
+    - default: 'true'
+      name: asyncResp
+      type: string
+    - default: '15'
+      name: asyncRespThreads
+      type: string
+  steps:
+    - image: registry.redhat.io/openshift4/ose-tools-rhel8
+      name: get-lt-summary-to-influxdb
+      resources: {}
+      script: >
+        #!/usr/bin/env bash
+
+        POD_NAME=$(oc get pods -o jsonpath="{.items[-1:].metadata.name}"
+        --field-selector=status.phase==Succeeded --sort-by=.status.startTime)
+
+        echo Pod name: $POD_NAME 
+
+        POD_STARTED_AT=$(oc get pods -o
+        jsonpath="{.items[-1:].status.containerStatuses[].state.terminated.startedAt}"
+        --field-selector=status.phase==Succeeded --sort-by=.status.startTime)
+
+        echo Pod started at: $POD_STARTED_AT 
+
+        POD_FINISHED_AT=$(oc get pods -o
+        jsonpath="{.items[-1:].status.containerStatuses[].state.terminated.finishedAt}"
+        --field-selector=status.phase==Succeeded --sort-by=.status.startTime)
+
+        echo Pod finished at: $POD_FINISHED_AT
+
+        POD_LOGS=$(oc logs pod/$POD_NAME)
+
+        NUM_CONN=$(echo $POD_LOGS | jq '.spec.numberOfConnections') 
+
+        echo Num Conn: $NUM_CONN
+
+        TEST_DURATION_SEC=$(echo $POD_LOGS | jq '.spec.testDurationSeconds')
+
+        echo Test duration secs: $TEST_DURATION_SEC
+
+        TIMEOUT_SEC=$(echo $POD_LOGS | jq '.spec.timeoutSeconds') 
+
+        echo Timeout seconds: $TIMEOUT_SEC
+
+        TIME_TAKEN_SEC=$(echo $POD_LOGS | jq '.result.timeTakenSeconds') 
+
+        echo Time taken secs: $TIME_TAKEN_SEC
+
+        REQ_1XX=$(echo $POD_LOGS | jq '.result.req1xx') 
+
+        echo REQ_1XX: $REQ_1XX
+
+        REQ_2XX=$(echo $POD_LOGS | jq '.result.req2xx') 
+
+        echo REQ_2XX: $REQ_2XX
+
+        REQ_3XX=$(echo $POD_LOGS | jq '.result.req3xx') 
+
+        echo REQ_3XX: $REQ_3XX
+
+        REQ_4XX=$(echo $POD_LOGS | jq '.result.req4xx') 
+
+        echo REQ_4XX: $REQ_4XX
+
+        REQ_5XX=$(echo $POD_LOGS | jq '.result.req5xx') 
+
+        echo REQ_5XX: $REQ_5XX
+
+        REQ_OTHERS=$(echo $POD_LOGS | jq '.result.others') 
+
+        echo REQ_OTHERS: $REQ_OTHERS
+
+        MEAN_LATENCY=$(echo $POD_LOGS | jq '.result.latency.mean') 
+
+        echo Mean latency: $MEAN_LATENCY 
+
+        MAX_LATENCY=$(echo $POD_LOGS | jq '.result.latency.max') 
+
+        echo Max latency: $MAX_LATENCY 
+
+        MEAN_TPS=$(echo $POD_LOGS | jq '.result.rps.mean') 
+
+        echo Mean TPS: $MEAN_TPS
+
+        MAX_TPS=$(echo $POD_LOGS | jq '.result.rps.max') 
+
+        echo Max TPS: $MAX_TPS
+
+        POD_START_TIMESTAMP=$(date -d $POD_STARTED_AT +%s)
+
+        POD_FINISHED_TIMESTAMP=$(date -d $POD_FINISHED_AT +%s) 
+
+        echo Pod started at timestamp: $POD_START_TIMESTAMP 
+
+        echo Pod finished at timestamp: $POD_FINISHED_TIMESTAMP
+
+        curl -v -XPOST '$(inputs.params.influxDBURL)' --data-binary 'lt_result
+        numConnections='$NUM_CONN',testDurationSeconds='$TEST_DURATION_SEC',ltTargetSize=$(inputs.params.ltTargetSize),cThreads=$(inputs.params.cThreads),jacptThreads=$(inputs.params.jacptThreads),jacptQSize=$(inputs.params.jacptQSize),asyncResp=$(inputs.params.asyncResp),asyncRespThreads=$(inputs.params.asyncRespThreads),timeoutSeconds='$TIMEOUT_SEC',timeTakenSeconds='$TIME_TAKEN_SEC',req1xx='$REQ_1XX',req2xx='$REQ_2XX',req3xx='$REQ_3XX',req4xx='$REQ_4XX',req5xx='$REQ_5XX',others='$REQ_OTHERS',mean_latency='$MEAN_LATENCY',max_latency='$MAX_LATENCY',mean_tps='$MEAN_TPS',max_tps='$MAX_TPS',podStartTime='$POD_START_TIMESTAMP',podStopTime='$POD_FINISHED_TIMESTAMP

@@ -1,0 +1,32 @@
+﻿apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: wiremock-mlasp-deploy-task
+  namespace: demo1
+spec:
+  params:
+    - name: CTHREADS
+      type: string
+      default: "125"
+    - name: JACPTTHREADS
+      type: string
+      default: "110"
+    - name: JACTPQSIZE
+      type: string
+      default: "1000"
+    - name: ASYNCRSP
+      type: string
+      default: "true"
+    - name: ASYNCRESPTHREADS
+      type: string
+      default: "25"
+  steps:
+    - image: registry.redhat.io/openshift4/ose-cli
+      name: wiremock-mlasp-deployment
+      resources: {}
+      script: >
+        #!/usr/bin/env bash
+
+        oc new-app --image=quay.io/avitui/wire_mock_mlasp_ocp --name=wiremock-mlasp --labels='app=wiremock-mlasp' CTHREADS=$(inputs.params.CTHREADS) JACPTTHREADS=$(inputs.params.JACPTTHREADS) JACTPQSIZE=$(inputs.params.JACTPQSIZE) ASYNCRSP=$(inputs.params.ASYNCRSP) ASYNCRESPTHREADS=$(inputs.params.ASYNCRESPTHREADS)
+
+        sleep 2

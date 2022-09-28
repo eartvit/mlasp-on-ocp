@@ -1,0 +1,4 @@
+PipelineRun started: auto-multipod-lt-wiremock-run-pt9fm
+
+In order to track the PipelineRun progress run:
+tkn pipelinerun logs auto-multipod-lt-wiremock-run-pt9fm -f -n demo1

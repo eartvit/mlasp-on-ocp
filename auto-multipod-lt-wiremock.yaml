@@ -1,0 +1,203 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: auto-multipod-lt-wiremock
+  namespace: demo1
+spec:
+  params:
+    - name: URL
+      description: LT Target URL
+      default: 'wiremock-mlasp.demo1.svc.cluster.local:8080/another_mock'
+    - name: timeout
+      description: Bombardier Timeout
+      default: 5s
+    - name: outFormat
+      description: Bombardier Output Format
+      default: json
+    - name: durationLowerBound
+      description: LT duration lower bound
+      default: '10'
+    - name: durationUpperBound
+      description: LT duration upper bound
+      default: '360'
+    - name: connectionsLowerBound
+      description: Bombardier connections lower bound
+      default: '1'
+    - name: connectionsUpperBound
+      description: Bombardier connections upper bound
+      default: '20'
+    - name: scaleLowerBound
+      description: LT target wiremock scale lower bound
+      default: '1'
+    - name: scaleUpperBound
+      description: LT target wiremock scale upper bound
+      default: '10'
+    - name: jacptQSizeLowerBound
+      description: WireMock Jetty Accept Queue Size lower bound
+      default: '1000'
+    - name: jacptQSizeUpperBound
+      description: WireMock Jetty Accept Queue Size upper bound
+      default: '2000'
+    - name: asyncRespThreadsLowerBound
+      description: WireMock Async Resp Threads lower bound
+      default: '10'
+    - name: asyncRespThreadsUpperBound
+      description: WireMock Async Resp Threads upper bound
+      default: '25'
+    - name: jacptThreadsLowerBound
+      description: WireMock Jetty Acceptor Threads lower bound
+      default: '100'
+    - name: jacptThreadsUpperBound
+      description: WireMock Jetty Acceptor Threads upper bound
+      default: '200'
+    - name: asyncResp
+      description: WireMock use async response
+      default: 'true'
+  resources: []
+  workspaces: []
+  tasks:
+    - name: generate-random-number-connections
+      taskRef:
+        kind: Task
+        name: generate-random-number
+      params:
+        - name: lowerBound
+          value: $(params.connectionsLowerBound)
+        - name: upperBound
+          value: $(params.connectionsUpperBound)
+    - name: wiremock-mlasp-deploy-task
+      runAfter:
+        - generate-random-number-connections
+        - generate-random-number-duration
+        - generate-random-number-scale
+        - generate-random-number-jacptqsize
+        - generate-random-number-asyncrespthreads
+        - calculate-cthreads-value-task
+      taskRef:
+        kind: Task
+        name: wiremock-mlasp-deploy-task
+      params:
+        - name: CTHREADS
+          value: $(tasks.calculate-cthreads-value-task.results.cthreadsNum)
+        - name: JACPTTHREADS
+          value: $(tasks.generate-random-number-jacptthreads.results.randNum)
+        - name: JACTPQSIZE
+          value: $(tasks.generate-random-number-jacptqsize.results.randNum)
+        - name: ASYNCRSP
+          value: $(params.asyncResp)
+        - name: ASYNCRESPTHREADS
+          value: $(tasks.generate-random-number-asyncrespthreads.results.randNum)
+    - name: scale-deployment-task
+      runAfter:
+        - wiremock-mlasp-deploy-task
+      taskRef:
+        kind: Task
+        name: scale-deployment-task
+      params:
+        - name: deploymentName
+          value: wiremock-mlasp
+        - name: size
+          value: $(tasks.generate-random-number-scale.results.randNum)
+    - name: generate-random-number-jacptqsize
+      taskRef:
+        kind: Task
+        name: generate-random-number
+      params:
+        - name: lowerBound
+          value: $(params.jacptQSizeLowerBound)
+        - name: upperBound
+          value: $(params.jacptQSizeUpperBound)
+    - name: generate-random-number-asyncrespthreads
+      taskRef:
+        kind: Task
+        name: generate-random-number
+      params:
+        - name: lowerBound
+          value: $(params.asyncRespThreadsLowerBound)
+        - name: upperBound
+          value: $(params.asyncRespThreadsUpperBound)
+    - name: generate-random-number-jacptthreads
+      taskRef:
+        kind: Task
+        name: generate-random-number
+      params:
+        - name: lowerBound
+          value: $(params.jacptThreadsLowerBound)
+        - name: upperBound
+          value: $(params.jacptThreadsUpperBound)
+    - name: generate-random-number-scale
+      taskRef:
+        kind: Task
+        name: generate-random-number
+      params:
+        - name: lowerBound
+          value: $(params.scaleLowerBound)
+        - name: upperBound
+          value: $(params.scaleUpperBound)
+    - name: generate-random-number-duration
+      taskRef:
+        kind: Task
+        name: generate-random-number
+      params:
+        - name: lowerBound
+          value: $(params.durationLowerBound)
+        - name: upperBound
+          value: $(params.durationUpperBound)
+    - name: bombardier-task
+      runAfter:
+        - scale-deployment-task
+      taskRef:
+        kind: Task
+        name: bombardier-task
+      params:
+        - name: URL
+          value: $(params.URL)
+        - name: connections
+          value: $(tasks.generate-random-number-connections.results.randNum)
+        - name: duration
+          value: $(tasks.generate-random-number-duration.results.randNum)s
+        - name: timeout
+          value: $(params.timeout)
+        - name: outFormat
+          value: $(params.outFormat)
+    - name: lt-summary
+      runAfter:
+        - bombardier-task
+      taskRef:
+        kind: Task
+        name: lt-summary
+      params:
+        - name: influxDBURL
+          value: >-
+            http://influxdb.demo1.svc.cluster.local:8086/write?db=bombardier&precision=s&user=root&p=root
+        - name: ltTargetSize
+          value: $(tasks.generate-random-number-scale.results.randNum)
+        - name: cThreads
+          value: $(tasks.calculate-cthreads-value-task.results.cthreadsNum)
+        - name: jacptThreads
+          value: $(tasks.generate-random-number-jacptthreads.results.randNum)
+        - name: jacptQSize
+          value: $(tasks.generate-random-number-jacptqsize.results.randNum)
+        - name: asyncResp
+          value: $(params.asyncResp)
+        - name: asyncRespThreads
+          value: $(tasks.generate-random-number-asyncrespthreads.results.randNum)
+    - name: wiremock-cleanup-task
+      runAfter:
+        - lt-summary
+      taskRef:
+        kind: Task
+        name: wiremock-cleanup-task
+      params:
+        - name: appLabel
+          value: wiremock-mlasp
+    - name: calculate-cthreads-value-task
+      runAfter:
+        - generate-random-number-jacptthreads
+      taskRef:
+        kind: Task
+        name: calculate-cthreads-value-task
+      params:
+        - name: inputNumber
+          value: $(tasks.generate-random-number-jacptthreads.results.randNum)
+  finally: []

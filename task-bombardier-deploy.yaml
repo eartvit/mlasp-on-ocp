@@ -1,0 +1,39 @@
+﻿apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: bombardier-task
+  namespace: demo1
+spec:
+  params:
+    - name: URL
+      type: string
+    - default: '10'
+      name: connections
+      type: string
+    - default: 10s
+      name: duration
+      type: string
+    - default: 2s
+      name: timeout
+      type: string
+    - default: plain-text
+      name: outFormat
+      type: string
+  steps:
+    - args:
+        - '-c'
+        - $(inputs.params.connections)
+        - '-d'
+        - $(inputs.params.duration)
+        - '-k'
+        - '-o'
+        - $(inputs.params.outFormat)
+        - '-t'
+        - $(inputs.params.timeout)
+        - '-l'
+        - $(inputs.params.URL)
+      command:
+        - /go/bin/bombardier
+      image: 'docker.io/waja/bombardier:latest'
+      name: bombardier-task
+      resources: {}

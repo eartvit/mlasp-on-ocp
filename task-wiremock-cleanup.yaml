@@ -1,0 +1,18 @@
+﻿apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: wiremock-cleanup-task
+  namespace: demo1
+spec:
+  params:
+    - default: wiremock-mlasp
+      name: appLabel
+      type: string
+  steps:
+    - image: registry.redhat.io/openshift4/ose-cli
+      name: scale-deployment
+      resources: {}
+      script: |
+        #!/usr/bin/env bash
+        oc delete deployment,services -l app=$(inputs.params.appLabel)
+        sleep 2

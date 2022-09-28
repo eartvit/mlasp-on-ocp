@@ -1,0 +1,23 @@
+﻿apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: scale-deployment-task
+  namespace: demo1
+spec:
+  params:
+    - name: deploymentName
+      type: string
+    - default: '1'
+      name: size
+      type: string
+  steps:
+    - image: registry.redhat.io/openshift4/ose-cli
+      name: scale-deployment
+      resources: {}
+      script: >
+        #!/usr/bin/env bash
+
+        oc scale --replicas=$(inputs.params.size)
+        deployment/$(inputs.params.deploymentName)
+
+        sleep 2
