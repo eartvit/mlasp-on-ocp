@@ -207,3 +207,21 @@ Let's get started. From the JupyterHub console we shall launch a notebook server
 ![ocp-odh-jh-std-01](images/ocp-odh-jh-std-01.png)
 
 Once the server is started, you can either type in all the commands in the notebook cells following the prepared notebook in the ![notebooks](/notebooks) section of this repository (or just import them by using the upload function inside the JupyterLab IDE).
+
+The first notebook is about the data preparation. Before data is analyzed, it must be retrieved from its source, in our case the InfluxDB. The Python programming language has a library for connecting and retrieving data out of InfluxDB backends and convert them to an object format compatible with the Pandas library (typically used for data manipulation in datascience projects).
+The retrieved data and pre-processed data is then stored in a csv file to be used later on for training.
+
+The second notebook is where the model is created and trained on a subset of the extracted data (typically a 80%-20% split for training and testing purposes). Once the model is trained, it may be used for inferencing.
+
+## Model Serving
+
+In order to use an ML model, it must be packaged and deployed as a service to be called by another application. As explained earlier we shall use our trained model to provide inference on two scenarios:
+
+* What if scenario: where the model will provide a prediction based on specific inputs.
+* Find a configuration with a given (percentage) deviation from a desired target.
+
+The model serving may easily be implemented with the help of the [Seldon](https://seldon.io) framework (also available as an operator for OpenShift, or by being packaged in a container which is then deployed on OpenShift).
+
+[TODO] Describe Seldon deployment.
+
+Now that we have our model served, we need an application which can query the model for predictions and then provide a response based on the provided input. By keeping the model standalone it will be easy to provide updated versions (after retraining in case of model drift, or just because new data is available)...
