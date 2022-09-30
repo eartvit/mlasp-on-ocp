@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WireMock and Bombardier Configuration Prediction Output</title>
+</head>
+<body>
+<h2>Your predicted results are:</h2><br>
+<table>
+    <tr>
+        <td>Prediction:</td>
+        <td> {{ results['Prediction'] }} </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Deviation:</td>
+        <td> {{ results['Deviation'] }} &#37;</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Parameters:</td>
+        <td></td>
+        <td></td>
+    </tr>
+    {% for key, value in results["Parameters"].items() %}
+       <tr>
+           <td></td>
+           <td> {{ key }}: </td>
+           <td> {{ value }} </td>
+       </tr>
+    {% endfor %}
+</table>
+<!-- <h3>{{results}}</h3> -->
+</body>
+</html>
