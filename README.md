@@ -240,6 +240,7 @@ Now that we have our model served, we need an application which can query the mo
 
 For the second scenario we want to find a valid configuration for the test subject system within a defined search space. We need to specify ranges for all the different parameters used by the model. In addition, we also need to specify an acceptable deviation (in percentage) from the desired target and a number of "epochs" (or search iterations) to search for.
 A sample web application implementing the above logic is provided in the [test-app](test-app/) folder of this repository. Similar to the model-app, the test-app also follows a Docker strategy for the build, therefore deploying it in OpenShift follows the same approach as described earlier. Please note that the ```test-app``` application expects the name of the ML model app service (the cluster internal endpoint) in order to perform the ML model inferences. This information is specified during deployment as an environment variable defined in the *Deployment* section of the S2I application deployment process. To add this information, after adding the route information, scroll down and click on the "Deployment" link, then add the ```ML_SERVICE_ENDPOINT``` and ```SERVICE_PORT``` variables. The service port shall be 8080 and the ML_SERVICE_ENDPOINT shall be: ```http://model-app.demo1.svc.cluster.local:8080/predict```.
+![ocp-developer-04](images/ocp-developer-04.png)
 
 Now that the test app is deployed, we can run some simulations.
 ![ocp-test-app-01](images/ocp-test-app-01.png)
