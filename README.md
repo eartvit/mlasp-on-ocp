@@ -206,7 +206,7 @@ Another area outside of the scope of this demo is to reproduce the different ML 
 Let's get started. From the JupyterHub console we shall launch a notebook server. As we shall build an XGB based model, we can make use of the standard datascience notebook, with a medium sized container:
 ![ocp-odh-jh-std-01](images/ocp-odh-jh-std-01.png)
 
-Once the server is started, you can either type in all the commands in the notebook cells following the prepared notebook in the ![notebooks](/notebooks) section of this repository (or just import them by using the upload function inside the JupyterLab IDE).
+Once the server is started, you can either type in all the commands in the notebook cells following the prepared notebook in the [notebooks](notebooks/) section of this repository (or just import them by using the upload function inside the JupyterLab IDE).
 
 The first notebook is about the data preparation. Before data is analyzed, it must be retrieved from its source, in our case the InfluxDB. The Python programming language has a library for connecting and retrieving data out of InfluxDB backends and convert them to an object format compatible with the Pandas library (typically used for data manipulation in datascience projects).
 The retrieved data and pre-processed data is then stored in a csv file to be used later on for training.
@@ -239,11 +239,11 @@ To query the model for the first scenario, the "what if?" scenario, the model en
 Now that we have our model served, we need an application which can query the model for predictions and then provide a response based on the provided input. By keeping the model standalone it will be easy to provide updated versions (after retraining in case of model drift, or just because new data is available)...
 
 For the second scenario we want to find a valid configuration for the test subject system within a defined search space. We need to specify ranges for all the different parameters used by the model. In addition, we also need to specify an acceptable deviation (in percentage) from the desired target and a number of "epochs" (or search iterations) to search for.
-A sample web application implementing the above logic is provided in the [test-app](test-app/) folder of this repository. Similar to the model-app, the test-app also follows a Docker strategy for the build, therefore deploying it in OpenShift follows the same approach as described earlier. Please note that the ```test-app``` application expects the name of the ML model app service (the cluster internal endpoint) in order to perform the ML model inferences. This information is specified during deployment as an environment variable defined in the *Deployment* section of the S2I application deployment process. To add this information, after adding the route information, scroll down and click on the "Deployment" link, then add the ```ML_SERVICE_ENDPOINT``` and ```SERVICE_PORT``` variables. The service port shall be 8080 and the ML_SERVICE_ENDPOINT shall be: ```http://model-app.svc.cluster.local:8080/predict```
+A sample web application implementing the above logic is provided in the [test-app](test-app/) folder of this repository. Similar to the model-app, the test-app also follows a Docker strategy for the build, therefore deploying it in OpenShift follows the same approach as described earlier. Please note that the ```test-app``` application expects the name of the ML model app service (the cluster internal endpoint) in order to perform the ML model inferences. This information is specified during deployment as an environment variable defined in the *Deployment* section of the S2I application deployment process. To add this information, after adding the route information, scroll down and click on the "Deployment" link, then add the ```ML_SERVICE_ENDPOINT``` and ```SERVICE_PORT``` variables. The service port shall be 8080 and the ML_SERVICE_ENDPOINT shall be: ```http://model-app.demo1.svc.cluster.local:8080/predict```.
 
 Now that the test app is deployed, we can run some simulations.
 ![ocp-test-app-01](images/ocp-test-app-01.png)
 And see the results:
 ![ocp-test-app-02](images/ocp-test-app-02.png)
 
-*That's it* You have now completed the MLASP demo on RedHat OpenShift.
+**That's it!** You have now completed the MLASP demo on RedHat OpenShift.
