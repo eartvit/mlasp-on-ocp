@@ -236,7 +236,8 @@ As earlier explained, we shall deploy from Git (please make sure you provide the
 To query the model for the first scenario, the "what if?" scenario, the model endpoint should be exposed outside of the OpenShift cluster if there is no other application that can make such queries. This operation can be achieved during deployment, or later on by a series of cluster administration operations. To simplify things for this demonstration, let's expose the endpoint at deployment. In the deployment screen, scroll down to the advanced options section and click on "Show advanced Routing options". Fill in the target port value with ```8080``` (since that is the one inside the Dockerfile), check the Secure Route option and select "Edge" for TLS termination and "Redirect" for Insecure traffic. Then click on the "Create" button and wait for the application to be deployed:
 ![ocp-developer-03](images/ocp-developer-03.png)
 
-Now that we have our model served, we need an application which can query the model for predictions and then provide a response based on the provided input. By keeping the model standalone it will be easy to provide updated versions (after retraining in case of model drift, or just because new data is available)...
+Now that we have our model served, we can query it directly using the exposed route. This is the "*what if*" scenario. We shall test this using [Postman](https://postman.com):
+![postman-scenario-01](images/postman-scenario1.png)
 
 For the second scenario we want to find a valid configuration for the test subject system within a defined search space. We need to specify ranges for all the different parameters used by the model. In addition, we also need to specify an acceptable deviation (in percentage) from the desired target and a number of "epochs" (or search iterations) to search for.
 A sample web application implementing the above logic is provided in the [test-app](test-app/) folder of this repository. Similar to the model-app, the test-app also follows a Docker strategy for the build, therefore deploying it in OpenShift follows the same approach as described earlier. Please note that the ```test-app``` application expects the name of the ML model app service (the cluster internal endpoint) in order to perform the ML model inferences. This information is specified during deployment as an environment variable defined in the *Deployment* section of the S2I application deployment process. To add this information, after adding the route information, scroll down and click on the "Deployment" link, then add the ```ML_SERVICE_ENDPOINT``` and ```SERVICE_PORT``` variables. The service port shall be 8080 and the ML_SERVICE_ENDPOINT shall be: ```http://model-app.demo1.svc.cluster.local:8080/predict```.
@@ -246,5 +247,9 @@ Now that the test app is deployed, we can run some simulations.
 ![ocp-test-app-01](images/ocp-test-app-01.png)
 And see the results:
 ![ocp-test-app-02](images/ocp-test-app-02.png)
+
+Alternatively, we can also use Postman as in the earlier scenario (*what if*) and query the API exposed by the app for this purpose. Note that if using Postman, it is important to provide the first line of the JSON body of the request the list of features used by the ML model in exactly the same order as they were defined and used during model training.
+Also please note the configuration generation app is generic so it may be reused for other test subjects (just provide a different list of feature names). Additionally, as explained in the source code, the features search space is a range or a list: if only two elements are provided, then it will be an inclusive range of the two values, if a list (of at least 3 elements), then a random choice from the elements of the list. The next diagram shows how the request and response is being rendered using Postman:
+![postman-scenario-02](images/postman-scenario2.png)
 
 **That's it!** You have now completed the MLASP demo on RedHat OpenShift.
