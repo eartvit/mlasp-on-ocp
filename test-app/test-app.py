@@ -181,7 +181,7 @@ def num(s):
 
 
 def extractFeatureSpace(content):    
-    features = {'asyncResp': list(map(bool, content['asyncResp'].split(','))),
+    features = {'asyncResp': list(map(num, content['asyncResp'].split(','))),
                 'asyncRespThreads': list(map(num, content['asyncRespThreads'].split(','))),
                 'cThreads': list(map(num, content['cThreads'].split(','))),
                 'jacptQSize': list(map(num, content['jacptQSize'].split(','))),
