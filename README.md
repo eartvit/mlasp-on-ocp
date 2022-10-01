@@ -212,6 +212,7 @@ The first notebook is about the data preparation. Before data is analyzed, it mu
 The retrieved data and pre-processed data is then stored in a csv file to be used later on for training.
 
 The second notebook is where the model is created and trained on a subset of the extracted data (typically a 80%-20% split for training and testing purposes). Once the model is trained, it may be used for inferencing.
+Please note that for the model training a sample dateset is provided in the notebooks' folder. This sample has been used to train the model and save its binary in the ```model-app``` folder for the model-serving application. If you wish to generate new data and retrain the model please fork this repository and after model retraining ensure the model binary is pushed back to your (forked) repository for the model serving part.
 
 ## Model Serving
 
