@@ -12,7 +12,14 @@ class TestXGB(object):
     print(f'Got X={X} of type {type(X)}, feature_names={self.features} \\n')
     record = pd.DataFrame(X, columns=self.features)
     print(f'Record is {record}')
-    resp = self.model.predict(record)
+
+    resp = 0
+    try:
+      resp = self.model.predict(record)
+    except Exception as e:
+        ex = e
+        print(f"Prediction service exception: {ex}")
+    
     return resp
 
 
