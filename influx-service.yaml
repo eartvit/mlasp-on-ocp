@@ -1,0 +1,19 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: influxdb
+  namespace: demo1
+  labels:
+    app: influxdb
+spec:
+  ipFamilies:
+    - IPv4
+  ports:
+    - protocol: TCP
+      port: 8086
+      targetPort: 8086
+  internalTrafficPolicy: Cluster
+  ipFamilyPolicy: SingleStack
+  sessionAffinity: None
+  selector:
+    app: influxdb
