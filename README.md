@@ -7,6 +7,10 @@ This is a demo for the overall process described in the MLASP research paper pub
 
 In order to execute the below guide, access to a Red Hat OpenShift environment is required. If you don't have one, you can start a trial by creating an account at [RedHat Cloud website](https://cloud.redhat.com). Alternatively, it is also possible to execute the guide on a local (reduced version) of the platform, typically used for development purposes. Once you registered on the [RedHat Cloud website](https://cloud.redhat.com), you can obtain your version of the local Red Hat Openshift by downloading the installer from the [Console](https://console.redhat.com/openshift/create/local).
 
+The implementation of the datascience/machine learning related aspects are covered using [Open Data Hub](https://opendatahub.io)(ODH), and [Red Hat OpenShift DataScience](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-data-science)(RHODS) operators running on top of the Red Hat Openshift platform. ODH is the upstream version of RedHat's RHODS operator and service.
+
+*Note: Today the model serving service from ODH/RHODS (model mesh serving) accepts OpenVINO and/or ONNX compatible models. ONNX models have limited support (for now) for XGBoost based models, therefore the RHODS version of the ML model is using Tensorflow. For ODH, either provided examples (XGBoost and Tensorflow based models) can be used, however for simplicity reasons for the ODH version we only provide the full code for the XGBoost version approach. RHODS version full code is available and is using Tensorflow. Updates shall be provided for RHODS as soon as XGBoost models will be fully supported by ONNX and model mesh server.*
+
 ## Foreword
 
 This repository presents a step by step guide on a possible setup of the MLASP process described in the aforementioned research article published by Springer's Empirical Software Engineering Journal.
@@ -170,7 +174,16 @@ oc delete pod --field-selector=status.phase==Succeeded
 ## Machine Learning Modelling
 
 As load testing data gathers we can prepare for the next stage of the MLASP process, namely the ML modelling and training part.
-A simple and straightforward way of achieving this step is making use of the [Open Data Hub](https://opendatahub.io) operator which is a blueprint architecture for machine learning workloads on Kubernetes based platforms. Open Data Hub is formed of several independent tools and projects. For the purposes of this demonstration we only need the JupyterHub component as an IDE used by ML practitioners and Data Scientists to prepare data for machine learning modelling and then build and train machine learning models.
+A simple and straightforward way of achieving this step is making use of either the [Open Data Hub](https://opendatahub.io)(ODH) operator or the [RedHat Openshift DataScience](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-data-science)(RHODS) operator which is a blueprint architecture for machine learning workloads on Kubernetes based platforms. Both ODH and RHODS are formed of several independent tools and projects.
+
+When using ODH for the purposes of this demonstration we only need the JupyterHub component as an IDE used by ML practitioners and Data Scientists to prepare data for machine learning modelling and then build and train machine learning models.
+
+When using RHODS we shall use DataScience workbench which consists of:
+* The Jupyter notebook controller
+* A S3 compatible storage reference (can be an actual AWS S3 bucket or a bucket provided by Red Hat OpenShift Data Foundations operator).
+* Model mesh service
+
+### Open Data Hub variant
 
 To install the Open Data Hub (ODH) operator on OpenShift, we shall use the web console. As a cluster admin user, navigate to the Operators > Operators Hub page and type in Open Data Hub in the search box:
 ![ocp-odh-01](images/ocp-odh-01.png)
@@ -211,18 +224,40 @@ This step is required since as you recall from above, ODH is a set of independen
 OpenShift also provided CUDA support for NVIDIA based graphic cards (if they are available to the cluster), this subject is however outside of the scope of our demo.
 Another area outside of the scope of this demo is to reproduce the different ML architectures presented by the [MLASP](https://rdcu.be/cobcU) paper and published in the [SPEAR-SE MLASP](https://github.com/SPEAR-SE/mlasp) repository. We shall present however, as a generic approach, how to use the Jupyter inside OpenShift to process the load test data which has been summarized inside the InfluxDB timeseries database and create a simple model and train it. We shall then package the trained model into a new container for inferencing on the two use cases mentioned earlier in this article.
 
-Let's get started. From the JupyterHub console we shall launch a notebook server. As we shall build an XGB based model, we can make use of the standard datascience notebook, with a medium sized container:
+### RHODS variant
+To install the Red Hat Openshift Datascience (RHODS) operator on OpenShift, we shall use the web console. As a cluster admin user, navigate to the Operators > Operators Hub page and type in Red Hat Openshift Data Science in the search box:
+![ocp-rhods-01](images/rhods-01.png)
+
+Select the operator and click on install leaving all the defaults. Once the operator installation is completed wait a few minutes for the operator's sidecar to kick off all the components packed inside the operator. Please be patient as depending on the resources of your cluster this operation may take up to 30 minutes.
+
+Once installation completed (you should see the redhat-ods-applications namespace created inside your cluster and have several pods running inside as well as the RHODS dashboard URL inside the Networking->Routes section), use the RHODS dashboard URL to gain access to the RHODS dashboard and toolset:
+![ocp-rhods-02](images/rhods-02.png)
+
+Once you opened the dashboar, use the Data Science projects to create a new project which will define a workbench, an S3 storage (where your model will have to be stored) and a model mesh service (which shall deploy and service your model):
+![ocp-rhods-03](images/rhods-03.png)
+![ocp-rhods-04](images/rhods-04.png)
+
+### MLASP models
+
+Let's get started. From the JupyterHub console we shall launch a notebook server. 
+
+For the ODH version, we shall build an XGB based model, we can make use of the standard datascience notebook, with a medium sized container:
 ![ocp-odh-jh-std-01](images/ocp-odh-jh-std-01.png)
+
+For the RHODS version, we shall build a Tensorflow based model, we can use the existing TF based image, with a small sized container.
+![ocp-rhods-05](images/rhods-05.png)
 
 Once the server is started, you can either type in all the commands in the notebook cells following the prepared notebook in the [notebooks](notebooks/) section of this repository (or just import them by using the upload function inside the JupyterLab IDE).
 
 The first notebook is about data preparation. Before data is analyzed, it must be retrieved from its source, in our case the InfluxDB. The Python programming language has a library for connecting and retrieving data out of InfluxDB backends and converting them to an object format compatible with the Pandas library (typically used for data manipulation in datascience projects).
 The retrieved data and pre-processed data is then stored in a csv file to be used later on for training.
 
-The second notebook is where the model is created and trained on a subset of the extracted data (typically a 80%-20% split for training and testing purposes). Once the model is trained, it may be used for inferencing.
-Please note that for the model training a sample dataset is provided in the notebooks' folder. This sample has been used to train the model and save its binary in the ```model-app``` folder for the model-serving application. If you wish to generate new data and retrain the model please fork this repository and after model retraining ensure the model binary is pushed back to your (forked) repository for the model serving part.
+The second notebook (XGBoost for ODH and TF-MLP for RHODS) is where the model is created and trained on a subset of the extracted data (typically a 80%-20% split for training and testing purposes). Once the model is trained, it may be used for inferencing.
+Please note that for the model training a sample dataset is provided in the notebooks' folder. This sample has been used to train the model and save its binary in the ```model-app``` folder for the ODH based model-serving application. If you wish to generate new data and retrain the model please fork this repository and after model retraining ensure the model binary is pushed back to your (forked) repository for the model serving part.
 
 ## Model Serving
+
+### ODH variant
 
 In order to use an ML model, it must be packaged and deployed as a service to be called by another application. As explained earlier we shall use our trained model to provide inference on two scenarios:
 
@@ -260,5 +295,15 @@ And see the results:
 Alternatively, we can also use Postman as in the earlier scenario (*what if*) and query the API exposed by the app for this purpose. Note that if using Postman, it is important to provide the first line of the JSON body of the request the list of features used by the ML model in exactly the same order as they were defined and used during model training.
 Also please note the configuration generation app is generic so it may be reused for other test subjects (just provide a different list of feature names). Additionally, as explained in the source code, the features search space is a range or a list: if only two elements are provided, then it will be an inclusive range of the two values, if a list (of at least 3 elements), then a random choice from the elements of the list. The next diagram shows how the request and response is being rendered using Postman:
 ![postman-scenario-02](images/postman-scenario2.png)
+
+### RHODS variant
+
+To serve a model in RHODS we will use the default model mesh serving service. This service expects an ONNX or OpenVINO type of model binary file to exist on an S3 compatible storage.
+In our case we use the ONNX version so the TF-MLP-model notebook already has the code to convert the tensorflow model to onnx format and upload it to an S3 bucket. For deploying the model one needs to provide the credentials to the S3 bucket and the folder where the model binary is stored, then the model mesh service will detect the model file and deploy it.
+![ocp-rhods-06](images/rhods-06.png)
+![ocp-rhods-07](images/rhods-07.png)
+The endpoint where the model can be reached is then provided by the RHODS UI, providing the deployment was successful:
+![ocp-rhods-07](images/rhods-08.png)
+
 
 **That's it!** You have now completed the MLASP demo on RedHat OpenShift.
