@@ -305,5 +305,6 @@ In our case we use the ONNX version so the TF-MLP-model notebook already has the
 The endpoint where the model can be reached is then provided by the RHODS UI, providing the deployment was successful:
 ![ocp-rhods-07](images/rhods-08.png)
 
+Similar to the ODH variant, this repository has a sample web application implementing the above logic is provided in the [test-app-rhods](test-app-rhods/) folder of this repository. Similar to the test-app, the test-app-rhods follows a Docker strategy for the build, therefore deploying it in OpenShift follows the same approach as described earlier. Please note that the ```test-app-rhods``` application expects the name of the RHODS Model Server ML model app service endpoint in order to perform the ML model inferences. This information is specified during deployment as an environment variable defined in the *Deployment* section of the S2I application deployment process. To add this information, after adding the route information, scroll down and click on the "Deployment" link, then add the ```ML_SERVICE_ENDPOINT``` and ```SERVICE_PORT``` variables.
 
 **That's it!** You have now completed the MLASP demo on RedHat OpenShift.
