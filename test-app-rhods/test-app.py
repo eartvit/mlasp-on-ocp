@@ -6,6 +6,7 @@ import numpy as np
 from flask import Flask, request, jsonify, session, url_for, render_template, redirect
 import requests
 import logging
+import joblib
 
 
 def generateInputSequence(featSpace, exceptionList=None):
@@ -58,22 +59,36 @@ def generatePrediction(params):
     resp = None
     y_pred = -1
 
+    params_scaled = feature_scaler.transform([params]).tolist()
     message = {
-                "data": {
-                    "ndarray": [params]
-                }
-              }
+        "inputs":[
+            {
+                "name":"dense_input",
+                "shape":[
+                    1,
+                    8
+                ],
+                "datatype":"FP32",
+                "data":params_scaled
+            }
+        ]        
+    }
+    
+    headers = {
+        'content-type': 'application/json'
+    }    
 
     try:
-        resp = requests.post(url=ml_service_endpoint, json=message, verify=False)
-        logging.info(f"Processed request results: {resp}")
+        resp = requests.post(url=ml_service_endpoint, json=message, verify=False, headers=headers)
+        logging.info(f"Processed request results: {resp.json()}")
     except Exception as e:
         results_OK = False
         ex = e
         logging.error(f"Prediction service exception: {ex}")
 
     if results_OK:
-        y_pred = resp.json()['data']['ndarray'][0]
+        y_pred_scaled = resp.json()['outputs'][0]['data'][0]
+        y_pred = target_scaler.inverse_transform([y_pred_scaled])[0]
 
     return y_pred
 
@@ -119,7 +134,6 @@ def generateParameterCombinations(featureSpace, exceptionList, epochs, precision
 
     for i in range(epochs):
         inputSequence = generateInputSequence(featureSpace, exceptionList)
-        #y_pred = generatePrediction(inputSequence, model, trainingScaler, targetScaler)
         y_pred = generatePrediction(inputSequence)
         crt_dev = 100 * (abs(y_pred - searchTarget) / searchTarget)
         logging.debug(f'Got prediction {y_pred} which is {crt_dev}% away from target {searchTarget}')
@@ -160,7 +174,7 @@ def extractBestParameterCombination(parameterCombinations):
     parameters = parameterCombinations.get("parameters")
     deviation = parameterCombinations.get("deviation")
     predictions = parameterCombinations.get("predictions")
-
+    
     bestCombination = {
         'Parameters' : {},
         'Deviation': 0.0,
@@ -285,7 +299,6 @@ def prediction():
     searchTarget = extractSearchTarget(session)
 
     parameterCombinations = generateParameterCombinations(featureSpace, exceptionList, epochs, precision, searchTarget)
-
     bestParamCombination = extractBestParameterCombination(parameterCombinations)
 
     return render_template('prediction.html', results=bestParamCombination)
@@ -307,6 +320,8 @@ def ml_predict():
 
 service_port = os.environ['SERVICE_PORT']
 ml_service_endpoint = os.environ['ML_SERVICE_ENDPOINT']
+feature_scaler = joblib.load('standard_scaler.pkl')
+target_scaler = joblib.load('target_scaler.pkl')
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=service_port)

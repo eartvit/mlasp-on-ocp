@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WireMock and Bombardier Configuration Prediction Input</title>
+</head>
+<body>
+<h2>Please enter your configuration search space and target:</h2>
+<form method="post">
+    {# This hidden_tag is a CSRF security feature. #}
+    {{ form.hidden_tag() }}
+    <table>
+        <tr>
+            <td> {{ form.asyncResp.label }} </td>
+            <td> {{ form.asyncResp }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.asyncRespThreads.label }} </td>
+            <td> {{ form.asyncRespThreads }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.cThreads.label }} </td>
+            <td> {{ form.cThreads }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.jacptQSize.label }} </td>
+            <td> {{ form.jacptQSize }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.jacptThreads.label }} </td>
+            <td> {{ form.jacptThreads }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.ltTargetSize.label }} </td>
+            <td> {{ form.ltTargetSize }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.numConnections.label }} </td>
+            <td> {{ form.numConnections }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.timeoutSeconds.label }} </td>
+            <td> {{ form.timeoutSeconds }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.Epochs.label }} </td>
+            <td> {{ form.Epochs }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.Precision.label }} </td>
+            <td> {{ form.Precision }} </td>
+        </tr>
+        <tr>
+            <td> {{ form.SearchTargetValue.label }} </td>
+            <td> {{ form.SearchTargetValue }} </td>
+        </tr>
+    </table>
+    <br>
+    {{ form.submit }}
+</form>
+</body>
+</html>
