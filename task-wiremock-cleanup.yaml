@@ -14,5 +14,7 @@ spec:
       resources: {}
       script: |
         #!/usr/bin/env bash
+        echo 'Sleeping 60s before cleanup'
+        sleep 60
         oc delete deployment,services -l app=$(inputs.params.appLabel)
-        sleep 2
+        sleep 10

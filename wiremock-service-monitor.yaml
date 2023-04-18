@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: wiremock-mlasp
+  name: wiremock-monitor
+  namespace: demo1
+spec:
+  endpoints:
+    - interval: 3s
+      path: /__admin/metrics
+      port: 8080-tcp
+  namespaceSelector:
+    matchNames:
+      - demo1
+  selector:
+    matchLabels:
+      app: wiremock-mlasp

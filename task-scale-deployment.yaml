@@ -20,4 +20,4 @@ spec:
         oc scale --replicas=$(inputs.params.size)
         deployment/$(inputs.params.deploymentName)
 
-        sleep 2
+        sleep 10

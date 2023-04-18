@@ -53,6 +53,22 @@ spec:
     - name: asyncResp
       description: WireMock use async response
       default: 'true'
+    - default: '1'
+      description: Wiremock Container CPU limit
+      name: cpuLimit
+      type: string
+    - default: '2Gi'
+      description: Wiremock Container memory Limit
+      name: memoryLimit
+      type: string
+    - default: '500m'
+      description: Wiremock Container CPU request
+      name: cpuRequest
+      type: string
+    - default: '1Gi'
+      description: Wiremock Container memory request
+      name: memoryRequest
+      type: string
   resources: []
   workspaces: []
   tasks:
@@ -87,6 +103,14 @@ spec:
           value: $(params.asyncResp)
         - name: ASYNCRESPTHREADS
           value: $(tasks.generate-random-number-asyncrespthreads.results.randNum)
+        - name: cpuLimit
+          value: $(params.cpuLimit)
+        - name: memoryLimit
+          value: $(params.memoryLimit)
+        - name: cpuRequest
+          value: $(params.cpuRequest)
+        - name: memoryRequest
+          value: $(params.memoryRequest)
     - name: scale-deployment-task
       runAfter:
         - wiremock-mlasp-deploy-task
@@ -182,6 +206,14 @@ spec:
           value: $(params.asyncResp)
         - name: asyncRespThreads
           value: $(tasks.generate-random-number-asyncrespthreads.results.randNum)
+        - name: cpuLimit
+          value: $(params.cpuLimit)
+        - name: memoryLimit
+          value: $(params.memoryLimit)
+        - name: cpuRequest
+          value: $(params.cpuRequest)
+        - name: memoryRequest
+          value: $(params.memoryRequest)
     - name: wiremock-cleanup-task
       runAfter:
         - lt-summary

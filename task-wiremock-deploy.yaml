@@ -20,6 +20,18 @@ spec:
     - name: ASYNCRESPTHREADS
       type: string
       default: "25"
+    - default: '1'
+      name: cpuLimit
+      type: string
+    - default: '2Gi'
+      name: memoryLimit
+      type: string
+    - default: '500m'
+      name: cpuRequest
+      type: string
+    - default: '1Gi'
+      name: memoryRequest
+      type: string
   steps:
     - image: registry.redhat.io/openshift4/ose-cli
       name: wiremock-mlasp-deployment
@@ -27,6 +39,6 @@ spec:
       script: >
         #!/usr/bin/env bash
 
-        oc new-app --image=quay.io/avitui/wire_mock_mlasp_ocp:v1.1 --name=wiremock-mlasp --labels='app=wiremock-mlasp' CTHREADS=$(inputs.params.CTHREADS) JACPTTHREADS=$(inputs.params.JACPTTHREADS) JACTPQSIZE=$(inputs.params.JACTPQSIZE) ASYNCRSP=$(inputs.params.ASYNCRSP) ASYNCRESPTHREADS=$(inputs.params.ASYNCRESPTHREADS)
+        oc new-app --image=quay.io/avitui/wire_mock_mlasp_ocp:v1.1 --name=wiremock-mlasp --labels='app=wiremock-mlasp' --limits=$(inputs.params.cpuLimit),$(inputs.params.memoryLimit) --requests=$(inputs.params.cpuRequest),$(inputs.params.memoryRequest) CTHREADS=$(inputs.params.CTHREADS) JACPTTHREADS=$(inputs.params.JACPTTHREADS) JACTPQSIZE=$(inputs.params.JACTPQSIZE) ASYNCRSP=$(inputs.params.ASYNCRSP) ASYNCRESPTHREADS=$(inputs.params.ASYNCRESPTHREADS)
 
-        sleep 2
+        sleep 10
