@@ -39,6 +39,8 @@ spec:
       script: >
         #!/usr/bin/env bash
 
-        oc new-app --image=quay.io/avitui/wire_mock_mlasp_ocp:v1.1 --name=wiremock-mlasp --labels='app=wiremock-mlasp' --limits=$(inputs.params.cpuLimit),$(inputs.params.memoryLimit) --requests=$(inputs.params.cpuRequest),$(inputs.params.memoryRequest) CTHREADS=$(inputs.params.CTHREADS) JACPTTHREADS=$(inputs.params.JACPTTHREADS) JACTPQSIZE=$(inputs.params.JACTPQSIZE) ASYNCRSP=$(inputs.params.ASYNCRSP) ASYNCRESPTHREADS=$(inputs.params.ASYNCRESPTHREADS)
+        oc new-app --image=quay.io/avitui/wire_mock_mlasp_ocp:v1.1 --name=wiremock-mlasp --labels='app=wiremock-mlasp' CTHREADS=$(inputs.params.CTHREADS) JACPTTHREADS=$(inputs.params.JACPTTHREADS) JACTPQSIZE=$(inputs.params.JACTPQSIZE) ASYNCRSP=$(inputs.params.ASYNCRSP) ASYNCRESPTHREADS=$(inputs.params.ASYNCRESPTHREADS)
+
+        oc set resources deployment/wiremock-mlasp --limits=cpu=$(inputs.params.cpuLimit),memory=$(inputs.params.memoryLimit) --requests=cpu=$(inputs.params.cpuRequest),memory=$(inputs.params.memoryRequest) 
 
         sleep 10
