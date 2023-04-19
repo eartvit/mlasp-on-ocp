@@ -148,11 +148,11 @@ oc expose deployment influxdb --port=8086 --target-port=8086 --protocol=TCP --ty
 Now we are ready to execute on the load test automation using the ```loop_lt_multipod_pipeline_wiremock.sh``` shell script (please note this script requires to have also the tkn command line tool installed on your system).
 The script controls the number of iterations through the ```$RUNS``` environment variable, which must be set before using it. The script uses internally the tkn command line tool for Tekton pipelines control inside OpenShift and uses a number of parameters associated with the pipeline. If you want to change the defaults, alter directly the values in the script before running it. To execute the script with the defaults run the following commands on your system.
 
-*Note: the load control shell script used to control the Tekton pipeline runs uses tkn cli tool. The script has been verified with version 0.17.2 of tkn cli. To install it, downloaded it from the its GitHub location provided below, unpack and move it somewhere in your $PATH variable:*
+*Note: the load control shell script used to control the Tekton pipeline runs uses tkn cli tool. The script has been verified with version 0.30.1 of tkn cli. To install it, downloaded it from the its GitHub location provided below, unpack and move it somewhere in your $PATH variable:*
 
 ```bash
-curl -LO https://github.com/tektoncd/cli/releases/download/v0.17.2/tkn_0.17.2_Linux_x86_64.tar.gz
-sudo tar xvzf tkn_0.17.2_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
+curl -LO https://github.com/tektoncd/cli/releases/download/v0.30.1/tkn_0.30.1_Linux_x86_64.tar.gz
+sudo tar xvzf tkn_0.30.1_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
 ```
 
 Now that you have all prerequisites in place to generate load, use the load generator tool as below (e.g. 10 iterations)
