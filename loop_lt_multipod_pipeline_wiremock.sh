@@ -3,6 +3,8 @@
 NOW=`date +%s`
 ASYNCRESP="True"
 
+ERR_COUNT=0
+
 for (( i=0; i<$RUNS; ++i)); do
 
     ASYNC=$(($RANDOM%2))
@@ -33,11 +35,24 @@ for (( i=0; i<$RUNS; ++i)); do
     while [[ $STATUS != 'Succeeded' ]]
     do
       echo -e 'Pipeline run '$PIPELINERUN' is '$STATUS'...'
+      if [[ $STATUS == 'Failed' ]]; then
+        echo -e 'Cleaning up resources of failed pipelinerun...'
+        oc delete deployment,services -l app=wiremock-mlasp
+        ERR_COUNT = $((ERR_COUNT+1))
+        break;
+      fi
       STATUS=`tkn pipelineruns list --no-headers | sed -n 1p | awk '{print $NF}'`
       sleep 5
     done
-    echo -e 'Pipeline run '$PIPELINERUN' is '$STATUS'.'
+    if [[ $STATUS != 'Failed' ]]; then
+      echo -e 'Pipeline run '$PIPELINERUN' is '$STATUS'.'
+    fi
     echo -e 'Sleeping 60s before the next round starts.\n'
     sleep 60
 done
+
+if [[ $ERR_COUNT -gt 0 ]]; then
+  echo -e 'Errors encountered: $ERR_COUNT'
+fi
+
 
