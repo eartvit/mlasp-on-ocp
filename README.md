@@ -10,6 +10,7 @@ In order to execute the below guide, access to a Red Hat OpenShift environment i
 The implementation of the datascience/machine learning related aspects are covered using [Open Data Hub](https://opendatahub.io)(ODH), and [Red Hat OpenShift DataScience](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-data-science)(RHODS) operators running on top of the Red Hat Openshift platform. ODH is the upstream version of RedHat's RHODS operator and service.
 
 *Note: Today the model serving service from ODH/RHODS (model mesh serving) accepts OpenVINO and/or ONNX compatible models. ONNX models have limited support (for now) for XGBoost based models, therefore the RHODS version of the ML model is using Tensorflow. For ODH, either provided examples (XGBoost and Tensorflow based models) can be used, however for simplicity reasons for the ODH version we only provide the full code for the XGBoost version approach. RHODS version full code is available and is using Tensorflow. Updates shall be provided for RHODS as soon as XGBoost models will be fully supported by ONNX and model mesh server.*
+*Additionally, for the RHODS version, there is the option to use parallelization for model training with the help of a [ray](https://ray.io) cluster. As a result, two versions of the model training notebooks are provided, as well as instructions for setup a ray cluster using the ray operator.*
 
 ## Foreword
 
@@ -237,6 +238,41 @@ Once you opened the dashboar, use the Data Science projects to create a new proj
 ![ocp-rhods-03](images/rhods-03.png)
 ![ocp-rhods-04](images/rhods-04.png)
 
+### Accelerating model training using parallelization with [Ray](https://ray.io)
+Training time for ML models is dependent on the amount of available resources. Project [Ray](https://ray.io) provides the capability to accelerate the training (and tuning) of ML models. In our case, as we run on a Kubernetes environment, the accelerator comes as a cluster of pods running inside our OpenShift environment. In order to deploy a ray cluster inside OpenShift we shall use the kuberay operator:
+```bash
+oc create -k "github.com/ray-project/kuberay/ray-operator/config/default?ref=v0.5.0&timeout=90s"
+```
+This will create a series of resources inside the kubernetes cluster allowing to deploy a ray cluster afterwards:
+![ray-operator-install](images/27-ocp411-ray-operator-install.png)
+
+The operator will be instsalled in a new project, "ray-system". To check the status of the operator, run the below:
+```bash
+oc project ray-system
+oc get pods
+```
+The results should look as depicted in the below image:
+![ocp-ray-operator-ready](images/28-ocp411-ray-operator-ready.png)
+
+Now that we have the operator, we can instantiate a cluster. You can deploy as many clusters you desire, and depending on whether the cluster is going to be shared or not, you can use a different namespace for it (or keep it inside your project).
+In this case, we shall use ```demo``` as our target namespace for the Ray cluster. A sample 10-node cluster configuration file is provided in this repository. To deploy the cluster, apply the configuration to the desired namespace:
+```bash
+oc project demo
+oc apply -f ray-cluster.complete-py38-tf274-4Gi.yaml
+```
+
+The above will create an 11 node cluster, having 10 workers and 1 controller (head):
+![ocp-ray-cluster-ready](images/29-ocp411-ray-cluster-ready.png)
+
+To access the cluster we need to retrieve it's service endpoint, which as depicted in the below image is called raycluster-complete-head-svc.demo.svc.cluster.local, and the client port where we will need to connect is 10001:
+![ocp-ray-cluster-endpoint](images/30-ocp411-ray-cluster-demo-endpoint.png)
+
+*Important Note: The Jupyter notebook image (or the python environment) from where you want to send commands to the ray cluster must have the same Python version, and the same version of the libraries (including Ray) as the ones from the kuberay pod clusters. In our case, this is going to be 3.8 for Python, 2.4.0 for Ray and 2.7.4 for Tensorflow*
+
+*Note: Currently ODH operator packages support for Ray under the SDK and operators provided by [Project Codeflare](https://github.com/project-codeflare). At the time of writing this demo, project codeflare is not yet supported by the RHODS operator, therefore this demo uses the vanilla Kuberay operator supported by the Ray community.*
+
+*Note: The Ray based demonstration is a simple/basic example as this repository does not aim to provide a complete description/example of the full capabilities of the Ray library. In here we used ray tasks for training the ML model. According to the Ray's library documentation, it is recommended to use the Tune component of Ray for training deep learning models (more information available ![here](https://docs.ray.io/en/releases-2.4.0/tune/tutorials/tune-run.html)).*
+
 ### MLASP models
 
 Let's get started. From the JupyterHub console we shall launch a notebook server. 
@@ -246,6 +282,8 @@ For the ODH version, we shall build an XGB based model, we can make use of the s
 
 For the RHODS version, we shall build a Tensorflow based model, we can use the existing TF based image, with a small sized container.
 ![ocp-rhods-05](images/rhods-05.png)
+
+We also have another variant of the Tensorflow based model training (notebook), where we can accelare the training of the Tensorflow model using a Ray cluster. In order to run this ![notebook](notebooks/) you must have deployed the Ray cluster as described in the previous section.
 
 Once the server is started, you can either type in all the commands in the notebook cells following the prepared notebook in the [notebooks](notebooks/) section of this repository (or just import them by using the upload function inside the JupyterLab IDE).
 
