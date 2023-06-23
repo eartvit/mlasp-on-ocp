@@ -271,7 +271,7 @@ To access the cluster we need to retrieve it's service endpoint, which as depict
 
 *Note: Currently ODH operator packages support for Ray under the SDK and operators provided by [Project Codeflare](https://github.com/project-codeflare). At the time of writing this demo, project codeflare is not yet supported by the RHODS operator, therefore this demo uses the vanilla Kuberay operator supported by the Ray community.*
 
-*Note: The Ray based demonstration is a simple/basic example as this repository does not aim to provide a complete description/example of the full capabilities of the Ray library. In here we used ray tasks for training the ML model. According to the Ray's library documentation, it is recommended to use the Tune component of Ray for training deep learning models (more information available ![here](https://docs.ray.io/en/releases-2.4.0/tune/tutorials/tune-run.html)).*
+*Note: The Ray based demonstration is a simple/basic example as this repository does not aim to provide a complete description/example of the full capabilities of the Ray library. In here we used ray tasks for training the ML model. According to the Ray's library documentation, it is recommended to use the Tune component of Ray for training deep learning models (more information available [here](https://docs.ray.io/en/releases-2.4.0/tune/tutorials/tune-run.html)).*
 
 ### MLASP models
 
