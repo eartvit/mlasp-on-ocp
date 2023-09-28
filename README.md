@@ -273,6 +273,11 @@ To access the cluster we need to retrieve it's service endpoint, which as depict
 
 *Note: The Ray based demonstration is a simple/basic example as this repository does not aim to provide a complete description/example of the full capabilities of the Ray library. In here we used ray tasks for training the ML model. According to the Ray's library documentation, it is recommended to use the Tune component of Ray for training deep learning models (more information available [here](https://docs.ray.io/en/releases-2.4.0/tune/tutorials/tune-run.html)).*
 
+### Experiment tracking with [MLFlow](https://mlflow.org)
+Distributed training is important as it saves a lot of time when trying out different model configurations. However, it may be challenging to keep track of the experiments and find out which model performed best. One way to solve this is to use [MLFlow](https://mlflow.org). With MLFlow, we can track the experiments by storing models, hyperparameter values, training results, etc.
+This repository contains an example notebook for integrating Ray with MLFlow inside the OpenShift cluster. The instructions to setup ray are the one in the previous section, however the Ray version is different: `ray==2.6.3`. So, you can create another cluster using the ray configuration file in the ray+mlflow folder located under notebooks. There you will also find the example notebook as well as 2 other yaml files which represent application tiles inside a RHODS deployment for Ray and MLFlow.
+To install MLFlow, please follow the instructions from [here](https://ai-on-openshift.io/tools-and-applications/mlflow/mlflow/). Then you can create your new Ray cluster and then optionally apply the other 2 remaining yaml files from the mentioned folder.
+
 ### MLASP models
 
 Let's get started. From the JupyterHub console we shall launch a notebook server. 
